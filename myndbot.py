@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 
-import bson
 import configparser
 import datetime
 import irc.bot
 import irc.strings
 import irclog
-import pymongo
-
-logger = None
 
 
 class MyndBot(irc.bot.SingleServerIRCBot):
-    def __init__(self, channel, nickname, server, port=6667, ns_pass=None):
+    def __init__(self, channel, nickname, server, logger, port=6667,
+                 ns_pass=None):
         irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname,
                                             nickname)
         self.channel = channel
         self.nickname = nickname
         self.ns_pass = ns_pass
+        self.logger = logger
 
     def on_nicknameinuse(self, c, e):
         c.nick(c.get_nickname() + "_")
@@ -32,13 +30,13 @@ class MyndBot(irc.bot.SingleServerIRCBot):
         msg = e.arguments[1]
         date = datetime.datetime.utcnow()
         source = e.source.nick
-        logger.log(msg, date, source, "ctcp")
+        self.logger.log(msg, date, source, "ctcp")
 
     def on_pubmsg(self, c, e):
         msg = e.arguments[0]
         date = datetime.datetime.utcnow()
         source = e.source.nick
-        logger.log(msg, date, source, "msg")
+        self.logger.log(msg, date, source, "msg")
 
         cmd_sentinel = '!'
         if msg.startswith(cmd_sentinel):
@@ -77,7 +75,6 @@ class MyndBot(irc.bot.SingleServerIRCBot):
 
 
 def setup_logger(config):
-    global logger
     log_name = config.get('logging', 'logger', fallback="Null")
     log_handler_name = "{}Handler".format(log_name.capitalize())
     try:
@@ -92,12 +89,13 @@ def setup_logger(config):
     log_handler = log_handler_type(**log_opts)
     logger = irclog.BotLogger()
     logger.add_handler(log_handler)
+    return logger
 
 
 def main():
     config = configparser.ConfigParser()
     config.read('myndconfig.ini')
-    setup_logger(config)
+    logger = setup_logger(config)
 
     if not config.has_option('irc', 'server'):
         raise RuntimeError("No server provided! Aborting...")
@@ -109,7 +107,7 @@ def main():
     nick = config.get('irc', 'nickname', fallback='myndbot')
     port = config.getint('irc', 'port', fallback=6667)
 
-    bot = MyndBot(chan, nick, srv, port=port)
+    bot = MyndBot(chan, nick, srv, logger, port=port)
     bot.start()
 
 if __name__ == "__main__":

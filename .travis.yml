@@ -5,5 +5,5 @@ python:
 install:
   - pip install -q pep8 --use-mirrors
 
-before_script:
+script:
   - "pep8 ."

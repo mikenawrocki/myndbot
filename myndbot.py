@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import configparser
+import config
 import datetime
 import irc.bot
 import irc.strings
@@ -74,38 +74,36 @@ class MyndBot(irc.bot.SingleServerIRCBot):
             c.notice(nick, "Not understood: " + ' '.join(cmd))
 
 
-def setup_logger(config):
-    log_name = config.get('logging', 'logger', fallback="Null")
-    log_handler_name = "{}Handler".format(log_name.capitalize())
+def setup_logger(logger, logger_opts):
     try:
-        log_handler_type = getattr(irclog, log_handler_name)
+        log_handler_type = getattr(irclog, logger)
     except AttributeError:
         raise RuntimeError("No handler for type {}, aborting!".format(
                            log_handler_name))
-    try:
-        log_opts = dict(config.items(log_name))
-    except configparser.NoSectionError:
-        log_opts = {}
-    log_handler = log_handler_type(**log_opts)
+
+    log_handler = log_handler_type(**logger_opts)
     logger = irclog.BotLogger()
     logger.add_handler(log_handler)
     return logger
 
 
 def main():
-    config = configparser.ConfigParser()
-    config.read('myndconfig.ini')
-    logger = setup_logger(config)
+    conf = config.Config()
+    logger = setup_logger(conf.get_option('logging', 'logger'),
+                          conf.get_option('logging', 'logger_opts')
+                          )
 
-    if not config.has_option('irc', 'server'):
-        raise RuntimeError("No server provided! Aborting...")
-    if not config.has_option('irc', 'channel'):
-        raise RuntimeError("No channel provided! Aborting...")
+    srv = conf.get_option('irc', 'server')
+    if not srv:
+        print("No server specified! Aborting...")
+        exit(-3)
+    chan = conf.get_option('irc', 'channel')
+    if not chan:
+        print("No channel specified! Aborting...")
+        exit(-4)
 
-    srv = config.get('irc', 'server')
-    chan = config.get('irc', 'channel')
-    nick = config.get('irc', 'nickname', fallback='myndbot')
-    port = config.getint('irc', 'port', fallback=6667)
+    nick = conf.get_option('irc', 'nick', default='myndbot')
+    port = conf.get_option('irc', 'port', default=6667)
 
     bot = MyndBot(chan, nick, srv, logger, port=port)
     bot.start()

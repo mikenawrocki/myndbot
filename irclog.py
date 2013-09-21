@@ -1,7 +1,8 @@
 import pymongo
 
+
 class BotLogger(object):
-    def __init__(self, handlers = [], enabled = True):
+    def __init__(self, handlers=[], enabled=True):
         self.enabled = enabled
         self.handlers = handlers
 
@@ -39,11 +40,12 @@ class Handler(object):
     def close(self):
         pass
 
+
 class MongoHandler(Handler):
     def __init__(self, server='localhost',
-                       database='irc',
-                       collection='log',
-                       port = 27017):
+                 database='irc',
+                 collection='log',
+                 port=27017):
 
         self.client = pymongo.MongoClient(server, int(port))
         self.db = self.client[database]
@@ -51,18 +53,20 @@ class MongoHandler(Handler):
 
     def log(self, msg, date, source, msg_type):
         self.db[self.collection].insert({
-            "date" : date,
-            "type" : msg_type,
-            "content" : msg,
-            "source" : source
+            "date": date,
+            "type": msg_type,
+            "content": msg,
+            "source": source
         })
 
     def close(self):
         self.client.close()
 
+
 class StdoutHandler(Handler):
     def log(self, msg, date, source, msg_type):
-        print("{}|{}|{}|{}".format(date,msg_type,source,msg))
+        print("{}|{}|{}|{}".format(date, msg_type, source, msg))
+
 
 class NullHandler(Handler):
     def log(self, msg, date, source, msg_type):

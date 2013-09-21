@@ -10,9 +10,10 @@ import pymongo
 
 logger = None
 
+
 class MyndBot(irc.bot.SingleServerIRCBot):
     def __init__(self, channel, nickname, server, port=6667, ns_pass=None):
-        irc.bot.SingleServerIRCBot.__init__(self, [(server,port)], nickname,
+        irc.bot.SingleServerIRCBot.__init__(self, [(server, port)], nickname,
                                             nickname)
         self.channel = channel
         self.nickname = nickname
@@ -21,7 +22,7 @@ class MyndBot(irc.bot.SingleServerIRCBot):
     def on_nicknameinuse(self, c, e):
         c.nick(c.get_nickname() + "_")
 
-    def on_welcome(self, c, e): 
+    def on_welcome(self, c, e):
         if self.ns_pass:
             self.authenticate()
 
@@ -32,7 +33,6 @@ class MyndBot(irc.bot.SingleServerIRCBot):
         date = datetime.datetime.utcnow()
         source = e.source.nick
         logger.log(msg, date, source, "ctcp")
-
 
     def on_pubmsg(self, c, e):
         msg = e.arguments[0]
@@ -75,6 +75,7 @@ class MyndBot(irc.bot.SingleServerIRCBot):
         else:
             c.notice(nick, "Not understood: " + ' '.join(cmd))
 
+
 def setup_logger(config):
     global logger
     log_name = config.get('logging', 'logger', fallback="Null")
@@ -83,7 +84,7 @@ def setup_logger(config):
         log_handler_type = getattr(irclog, log_handler_name)
     except AttributeError:
         raise RuntimeError("No handler for type {}, aborting!".format(
-                                                        log_handler_name))
+                           log_handler_name))
     try:
         log_opts = dict(config.items(log_name))
     except configparser.NoSectionError:
@@ -92,10 +93,10 @@ def setup_logger(config):
     logger = irclog.BotLogger()
     logger.add_handler(log_handler)
 
+
 def main():
     config = configparser.ConfigParser()
     config.read('myndconfig.ini')
-    
     setup_logger(config)
 
     if not config.has_option('irc', 'server'):

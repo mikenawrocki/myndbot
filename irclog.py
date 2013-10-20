@@ -1,9 +1,3 @@
-try:
-    import pymongo
-except ImportError:
-    pass
-
-
 class BotLogger(object):
     def __init__(self, handlers=None, enabled=True):
         self.enabled = enabled
@@ -45,6 +39,8 @@ class Handler(object):
 
 
 class MongoHandler(Handler):
+    import pymongo
+
     def __init__(self, server='localhost',
                  database='irc',
                  collection='log',
